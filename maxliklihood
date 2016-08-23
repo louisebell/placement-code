@@ -1,0 +1,68 @@
+
+function [a,fval]=maxlikhood(y,t,w)
+
+yearmax=max(t);
+coordmax=max(y);
+wormmax=max(w);
+f=length(w); %length data set
+
+%set up minimisation
+%v=[0.01,100]; %Ic's for parameters [s,D,k,M0]
+v=[0.3,4,0.02,30];
+lb =[0,0,0,0]; %all parameters positive
+ub = [Inf,Inf,Inf,10000]; %bd initial worm burden M0=e^alpha<100 
+A = []; %no linear constraints
+b = [];
+Aeq = [];
+beq = [];
+opts=optimset('MaxFunEvals',6000);
+[a,fval]=fmincon(@likli,v,A,b,Aeq,beq,lb,ub,[],opts) %minimise -log(p)
+%neg=nbinfit(w);
+%poiss=poissfit(w);
+spread=2*(a(1)*a(2))^0.5;
+
+
+plot(t,y,w,'*');
+
+ 
+ 
+  xlabel('t');
+  xlabel('y');
+  ylabel('w');
+  hold on;
+  n=[0:coordmax];
+  m=[0:yearmax];
+ Ifit=pde2(a,n,m); %find numberical solution to pde at these parameter values
+  surf(m,n,Ifit);
+% axis([0,yearmax,0,coordmax,0,25000]);
+
+function b=likli(v) 
+%returns log liklihood value at v=[S,D,k,M0]
+   %S=v(1);
+   S=0;
+   D=v(1);
+   %S=v(1);
+    
+    %D=v(2);
+    k=v(2);
+    M0=v(3);
+    sum=0;
+
+    for i=1:f
+        if(D==0) M=M0*exp(S*t(i));
+        else
+        M=(M0/(2*(pi*D*t(i))^0.5))*exp(S*t(i)-(y(i)*y(i))/(4*D*t(i))); %calculate mean worm burden from solution to 1D Skellam equation
+        end
+        %M=M0;
+        P=1-(M/(k+M));
+       Y = nbinpdf(w(i),k,P); %prob of attaining ith worm burden value w(i) from NegBin(k,P)
+       %Y=poisspdf(w(i),k); 
+       if(Y==0)l=log(realmin);
+       else l=log(Y);  %use logarithms to prevent numerical instability 
+       end
+        sum=l+sum; %keep track of total probability  
+       
+    end
+b=-sum; %return neg function value as max problem
+end
+end
