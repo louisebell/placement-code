@@ -1,0 +1,23 @@
+function u=pde2(vars,datax,datat)
+%calculates the value of the ID function M at the inputed parameter set vars,
+%and (t,x) values datax and data t
+ aph=vars(1);
+ D=vars(2);
+p0=vars(4);
+xmesh=datax;
+    tmesh=datat;
+    coff=p0/(2*(pi*D)^0.5);
+for i=1:length(xmesh)
+        for j=1:length(tmesh)
+             
+           if(tmesh(j)==0) 
+               if(xmesh(i)==0) u(i,j)=p0;
+               else u(i,j)=0;
+               end
+           else
+             ins=aph*tmesh(j)-(1/(4*D))*(xmesh(i)*xmesh(i))/(tmesh(j));
+              u(i,j)=(coff/(tmesh(j))^0.5) * exp(ins);
+          end
+        end
+    end
+    
